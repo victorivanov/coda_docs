@@ -9,6 +9,22 @@ module CodaDocs
         response.parsed_response['items']
       end
 
+      def enumerate_response(url, options)
+        Enumerator.new do |y|
+          loop do
+            response = connection.get(url, query: options)
+            parse_response(response).each do |item|
+              y.yield item
+            end
+            if response['nextPageToken']
+              (options ||= {})[:pageToken] = response['nextPageToken']
+            else
+              break
+            end
+          end
+        end
+      end
+
       def connection
         conn = CodaDocs::Connection
         conn.default_options.merge!(
